@@ -34,18 +34,28 @@ sector = st.sidebar.selectbox("Select Sector", list(SECTORS.keys()))
 ticker = st.sidebar.selectbox("Select Company", SECTORS[sector])
 
 
-# ------------------ LOAD DATA (FIXED ⭐) ------------------
+# ------------------ LOAD DATA (CLOUD SAFE ⭐⭐⭐) ------------------
 @st.cache_data(ttl=60)
 def load_data(symbol):
-    data = yf.download(symbol, period="1y", progress=False)
+    periods = ["1y", "6mo", "3mo"]
 
-    # ⭐ FIX multi index columns (yfinance new bug)
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
+    for p in periods:
+        try:
+            data = yf.download(symbol, period=p, progress=False, threads=False)
 
-    return data
+            if data is not None and not data.empty:
+
+                if isinstance(data.columns, pd.MultiIndex):
+                    data.columns = data.columns.get_level_values(0)
+
+                return data
+        except:
+            pass
+
+    return None
 
 
+# ⭐ IMPORTANT — CALL FUNCTION
 data = load_data(ticker)
 
 if data is None or data.empty:
@@ -58,8 +68,6 @@ close = data["Close"]
 # ------------------ INDICATORS ------------------
 ma20 = moving_average(close)
 rsi_val = rsi(close)
-
-# ⭐ FIXED signal call
 signal = buy_sell_signal(rsi_val.iloc[-1])
 
 
@@ -81,10 +89,12 @@ st.line_chart(pd.DataFrame({
 
 st.subheader("📊 RSI Indicator")
 st.line_chart(rsi_val)
+
+
 # ------------------ LSTM PREDICTION ------------------
 st.subheader("🤖 LSTM Price Prediction")
 
-close_prices = data["Close"].dropna().values
+close_prices = close.dropna().values
 st.write("Close price length:", len(close_prices))
 
 pred_price = lstm_predict(close_prices)
@@ -93,6 +103,7 @@ if pred_price is None:
     st.warning("LSTM could not predict (need at least 60 rows)")
 else:
     st.success(f"Predicted Next Price: {pred_price:.2f}")
+
 
 # =====================================================
 # ================== PAPER TRADING ====================
@@ -138,7 +149,6 @@ if st.session_state.portfolio:
     for stock_symbol in portfolio_df["Stock"].unique():
         latest_data = yf.download(stock_symbol, period="1d", progress=False)
 
-        # ⭐ FIX multi index
         if isinstance(latest_data.columns, pd.MultiIndex):
             latest_data.columns = latest_data.columns.get_level_values(0)
 
