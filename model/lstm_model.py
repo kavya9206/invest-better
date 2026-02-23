@@ -1,9 +1,14 @@
 import numpy as np
+import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
-def lstm_predict(close_prices):
+
+# ⭐ CACHE TRAINING (CRITICAL FIX)
+@st.cache_resource
+def train_model(close_prices):
+
     scaler = MinMaxScaler()
     scaled = scaler.fit_transform(close_prices.reshape(-1, 1))
 
@@ -24,7 +29,14 @@ def lstm_predict(close_prices):
     model.compile(optimizer='adam', loss='mse')
     model.fit(X, y, epochs=3, batch_size=32, verbose=0)
 
+    return model, scaler, scaled
+
+
+def lstm_predict(close_prices):
+
+    model, scaler, scaled = train_model(close_prices)
+
     last_60 = scaled[-60:].reshape(1,60,1)
-    pred = model.predict(last_60)
+    pred = model.predict(last_60, verbose=0)
 
     return scaler.inverse_transform(pred)[0][0]
