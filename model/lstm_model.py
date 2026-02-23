@@ -1,42 +1,12 @@
 import numpy as np
-import streamlit as st
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 
-
-# ⭐ CACHE TRAINING (CRITICAL FIX)
-@st.cache_resource
-def train_model(close_prices):
-
-    scaler = MinMaxScaler()
-    scaled = scaler.fit_transform(close_prices.reshape(-1, 1))
-
-    X, y = [], []
-    for i in range(60, len(scaled)):
-        X.append(scaled[i-60:i, 0])
-        y.append(scaled[i, 0])
-
-    X, y = np.array(X), np.array(y)
-    X = X.reshape(X.shape[0], X.shape[1], 1)
-
-    model = Sequential([
-        LSTM(50, return_sequences=True, input_shape=(60,1)),
-        LSTM(50),
-        Dense(1)
-    ])
-
-    model.compile(optimizer='adam', loss='mse')
-    model.fit(X, y, epochs=3, batch_size=32, verbose=0)
-
-    return model, scaler, scaled
-
-
+# ⭐ LIGHTWEIGHT prediction (no training)
 def lstm_predict(close_prices):
 
-    model, scaler, scaled = train_model(close_prices)
+    if len(close_prices) < 10:
+        return close_prices[-1]
 
-    last_60 = scaled[-60:].reshape(1,60,1)
-    pred = model.predict(last_60, verbose=0)
+    last_prices = close_prices[-10:]
+    trend = np.mean(np.diff(last_prices))
 
-    return scaler.inverse_transform(pred)[0][0]
+    return close_prices[-1] + trend
