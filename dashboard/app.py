@@ -86,13 +86,18 @@ st.line_chart(rsi_val)
 # ------------------ LSTM PREDICTION ------------------
 st.subheader("🤖 LSTM Price Prediction")
 
-try:
-    pred_price = lstm_predict(close.values)
+# ⭐ prepare close prices safely
+close_prices = data["Close"].dropna().values
+
+st.write("Close price length:", len(close_prices))  # debug
+
+pred_price = lstm_predict(close_prices)
+
+if pred_price is None:
+    st.warning("LSTM not predicted → need at least 60 valid rows")
+else:
     st.success(f"Predicted Next Price: {pred_price:.2f}")
-except:
-    st.warning("LSTM prediction failed.")
-
-
+    
 # =====================================================
 # ================== PAPER TRADING ====================
 # =====================================================

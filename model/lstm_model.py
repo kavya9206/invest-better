@@ -21,11 +21,14 @@ def load_model():
 # ---------- LSTM prediction ----------
 def lstm_predict(close_prices):
 
+    # ✅ Convert + remove NaN
+    close_prices = np.array(close_prices, dtype=float)
+    close_prices = close_prices[~np.isnan(close_prices)]
+
     # ✅ Safety check
     if close_prices is None or len(close_prices) < 60:
+        st.warning(f"LSTM needs 60 rows → current: {len(close_prices)}")
         return None
-
-    close_prices = np.array(close_prices)
 
     scaler = MinMaxScaler()
     scaled = scaler.fit_transform(close_prices.reshape(-1, 1))
@@ -37,18 +40,17 @@ def lstm_predict(close_prices):
 
     X, y = np.array(X), np.array(y)
 
-    # ✅ Another safety check
     if len(X) == 0:
+        st.warning("No sequences created for LSTM")
         return None
 
     X = X.reshape(X.shape[0], X.shape[1], 1)
 
     model = load_model()
 
-    # ⚠️ Lightweight training (kept minimal for Streamlit)
+    # ⚠️ minimal training
     model.fit(X, y, epochs=1, batch_size=32, verbose=0)
 
-    # ---------- Predict ----------
     last_60 = scaled[-60:].reshape(1, 60, 1)
     pred = model.predict(last_60, verbose=0)
 
