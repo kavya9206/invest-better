@@ -27,15 +27,18 @@ def lstm_predict(close_prices):
     X, y = [], []
     for i in range(60, len(scaled)):
         X.append(scaled[i-60:i,0])
-        y.append(saled[i,0])
+        y.append(scaled[i,0])   # ✅ FIXED
 
     X, y = np.array(X), np.array(y)
+
+    if len(X) == 0:
+        return None   # not enough data
+
     X = X.reshape(X.shape[0], X.shape[1], 1)
 
-    model = load_model()   # ⭐ cached model
+    model = load_model()
 
-    if len(X) > 0:
-        model.fit(X, y, epochs=1, batch_size=32, verbose=0)
+    model.fit(X, y, epochs=1, batch_size=32, verbose=0)
 
     last_60 = scaled[-60:].reshape(1,60,1)
     pred = model.predict(last_60, verbose=0)
