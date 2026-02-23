@@ -81,8 +81,6 @@ st.line_chart(pd.DataFrame({
 
 st.subheader("📊 RSI Indicator")
 st.line_chart(rsi_val)
-
-
 # ------------------ LSTM PREDICTION ------------------
 st.subheader("🤖 LSTM Price Prediction")
 
@@ -91,11 +89,11 @@ st.write("Close price length:", len(close_prices))
 
 pred_price = lstm_predict(close_prices)
 
-# ⭐ SAFE handling (important)
 if pred_price is None:
-    st.warning("LSTM could not predict (model returned None)")
+    st.warning("LSTM could not predict (need at least 60 rows)")
 else:
-    st.success(f"Predicted Next Price: {float(pred_price):.2f}")
+    st.success(f"Predicted Next Price: {pred_price:.2f}")
+
 # =====================================================
 # ================== PAPER TRADING ====================
 # =====================================================
